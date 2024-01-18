@@ -1,0 +1,9 @@
+name: TreasureChestGuardian
+version: '${project.version}'
+main: io.computerbandit.treasurechestguardian.TreasureChestGuardian
+api-version: '1.20'
+description: This plugin empowers server administrators with the ability to control and extend the breaking time of chests designated for treasure and loot regeneration.
+permissions:
+  treasurechestguardian.break:
+    description: Allows breaking of treasure chests (sneak to break)
+    default: op

@@ -1,0 +1,23 @@
+config-version: 1
+General:
+  # tif he config/paper-world-defaults.yml "lootables:auto-replenish" is set to false
+  # then the server will use a fallback method provided by TreasureChestGuardian plugin
+  # if "lootables:auto-replenish" is set to true then the server will always use the default paper auto replenish
+  # this plugin method is slightly different to papers it fills chest
+  enable-fallback-auto-replenish: true
+  reset-seed-on-replenish: true
+  replenish-interval:
+    min-seconds: 300  # 5 minutes
+    max-seconds: 600  # 10 minutes
+Notification:
+  # enables/disables the warning-message that is sent to the player
+  enable-warning-message: true
+  # uses minimessage components
+  warning-message: "<red>This is a this treasure chest! (sneak to break)"
+  # enables/disables the no-perm-message that is sent to the player
+  enable-no-perm-message: true
+  # uses minimessage components
+  no-perm-message: "<red>You do NOT have permission to break this treasure chest!"
+Permission:
+  # sets if the treasurechestguardian.break permission is needed to break a treasure chest
+  enforce-break-permission: true
