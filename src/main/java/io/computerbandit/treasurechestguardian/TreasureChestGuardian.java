@@ -1,7 +1,10 @@
 package io.computerbandit.treasurechestguardian;
 
+import io.computerbandit.treasurechestguardian.command.PluginCommandExecutor;
+import io.computerbandit.treasurechestguardian.command.PluginTabCompleter;
+import io.computerbandit.treasurechestguardian.event.InventoryInteractionListener;
 import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.Configuration;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -10,6 +13,7 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
     public static NamespacedKey LAST_REPLENISH_TIME_KEY;
     public static NamespacedKey NEXT_REPLENISH_TIME_KEY;
     public static NamespacedKey LOOT_TABLE_KEY;
+    public static NamespacedKey LOOT_TABLE_SEED_KEY;
 
     private static final int CONFIG_VERSION = 1;
 
@@ -23,6 +27,17 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
         LAST_REPLENISH_TIME_KEY = new NamespacedKey(this, "last_replenish_time");
         NEXT_REPLENISH_TIME_KEY = new NamespacedKey(this, "next_replenish_time");
         LOOT_TABLE_KEY = new NamespacedKey(this, "loot_table_key");
+        LOOT_TABLE_SEED_KEY = new NamespacedKey(this, "loot_table_seed_key");
+
+        // Register the command and TabCompleter
+        PluginCommand tcgCommand = this.getCommand("treasureChestGuardian");
+        PluginCommandExecutor commandExecutor = new PluginCommandExecutor(this);
+        PluginTabCompleter tabCompleter = new PluginTabCompleter();
+
+        if (tcgCommand != null) {
+            tcgCommand.setExecutor(commandExecutor);
+            tcgCommand.setTabCompleter(tabCompleter);
+        }
     }
 
     @Override
@@ -85,5 +100,6 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
     public boolean isSeedResetOnReplenish() {
         return getConfig().getBoolean("General.reset-seed-on-replenish", true);
     }
+
 
 }

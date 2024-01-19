@@ -4,6 +4,26 @@ main: io.computerbandit.treasurechestguardian.TreasureChestGuardian
 api-version: '1.20'
 description: This plugin empowers server administrators with the ability to control and extend the breaking time of chests designated for treasure and loot regeneration.
 permissions:
-  treasurechestguardian.break:
-    description: Allows breaking of treasure chests (sneak to break)
+  treasureChestGuardian:
     default: op
+    break:
+      description: Allows breaking of treasure chests (sneak to break)
+    command:
+      create:
+        description: Allows use of the testInventoryOpen command.
+commands:
+  treasureChestGuardian:
+    description: Main command for the TreasureChestGuardian plugin.
+    usage: /tcg <subcommand> [args]
+    aliases: [ tcg ]
+    permission: treasurechestguardian.command
+    permission-message: You do not have permission to use this command.
+    subcommands:
+      help:
+        description: Show help information for TreasureChestGuardian commands.
+        usage: /tcg help
+      create:
+        description: "Creates a chest with a loot table. Optional '-o' flag to open immediately. Optional loot table name."
+        usage: /tcg create [lootTableName] [-o]
+        permission: tcg.command.create
+        permission-message: You do not have permission to use this command.

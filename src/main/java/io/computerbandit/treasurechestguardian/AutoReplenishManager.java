@@ -3,11 +3,8 @@ package io.computerbandit.treasurechestguardian;
 import com.destroystokyo.paper.loottable.LootableInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
-import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
@@ -32,38 +29,27 @@ public class AutoReplenishManager {
     }
 
     //this is only called if the fallback is enabled and the paper version is disabled
-    public void checkAndReplenish(Inventory inventory, LootableInventory lootableInventory) {
+    public void checkAndReplenish(LootableInventory lootableInventory) {
+        if (lootableInventory instanceof Chest) {
+            Chest chest = (Chest) lootableInventory;
+            PersistentDataContainer container = chest.getPersistentDataContainer();
 
-        PersistentDataContainer dataContainer = getDataContainer(inventory.getHolder());
-        if (dataContainer == null) {
-            // Handle error: inventory holder does not support persistent data
-            return;
-        }
+            long nextReplenishTime = container.getOrDefault(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, 0L);
+            long currentTime = System.currentTimeMillis();
+            getPlugin().getLogger().info("checking nextReplenishTime: " + nextReplenishTime);
+            if (currentTime > nextReplenishTime) {
+                if (chest.getInventory().isEmpty()) {
 
-        long nextReplenishTime = dataContainer.getOrDefault(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, 0L);
-        long currentTime = System.currentTimeMillis();
-        getPlugin().getLogger().info("nextReplenishTime: " + nextReplenishTime);
-        if (currentTime > nextReplenishTime) {
-            if (inventory.isEmpty()) {
-                replenishTreasureChest(inventory, lootableInventory);
-                dataContainer.set(TreasureChestGuardian.LAST_REPLENISH_TIME_KEY, PersistentDataType.LONG, currentTime);
-                long interval = getRandomReplenishInterval() * 1000L;      // Convert seconds to milliseconds
-                dataContainer.set(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, currentTime + interval);
 
+                    container.set(TreasureChestGuardian.LAST_REPLENISH_TIME_KEY, PersistentDataType.LONG, currentTime);
+                    long newNextReplenishTime = currentTime + (getRandomReplenishInterval() * 1000L);      // Convert seconds to milliseconds
+                    container.set(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, newNextReplenishTime);
+
+                    replenishTreasureChest(chest);
+                    chest.update();
+                }
             }
         }
-
-    }
-
-
-    public PersistentDataContainer getDataContainer(InventoryHolder holder) {
-        if (holder instanceof Chest) {
-            return ((Chest) holder).getPersistentDataContainer();
-        } else if (holder instanceof StorageMinecart) {
-            return ((StorageMinecart) holder).getPersistentDataContainer();
-        }
-        // Return null or throw an exception if the holder is neither a BlockState nor an Entity
-        return null;
     }
 
     private int getRandomReplenishInterval() {
@@ -76,25 +62,38 @@ public class AutoReplenishManager {
         return minSeconds + random.nextInt(maxSeconds - minSeconds);
     }
 
-
     public boolean isPaperAutoReplenishDisabled(LootableInventory lootableInventory) {
         return lootableInventory == null || !lootableInventory.isRefillEnabled();
     }
 
-    private void replenishTreasureChest(Inventory inventory, LootableInventory lootableInventory) {
-        if (lootableInventory != null && inventory != null) {
-            if (inventory.getHolder() instanceof Chest) {
-                Chest chest = (Chest) inventory.getHolder();
-                String location = chest.getPersistentDataContainer().getOrDefault(TreasureChestGuardian.LOOT_TABLE_KEY, PersistentDataType.STRING, LootTables.EMPTY.name());
+    private void replenishTreasureChest(LootableInventory lootableInventory) {
+        plugin.getLogger().info("IN replenishTreasureChest() ");
+        if (lootableInventory != null) {
+            if (lootableInventory instanceof Chest) {
+                Chest chest = (Chest) lootableInventory;
+                PersistentDataContainer container = chest.getPersistentDataContainer();
+                String location = container.getOrDefault(TreasureChestGuardian.LOOT_TABLE_KEY, PersistentDataType.STRING, LootTables.EMPTY.name());
                 NamespacedKey key = NamespacedKey.fromString(location);
                 if (key != null) {
                     LootTable lootTable = Bukkit.getLootTable(key);
                     if (lootTable != null) {
-                        LootContext.Builder lootContextBuilder = new LootContext.Builder(Objects.requireNonNull(inventory.getLocation()));
-                        ArrayList<ItemStack> itemStacks = (ArrayList<ItemStack>) lootTable.populateLoot(plugin.isSeedResetOnReplenish() ? new Random(random.nextLong()) : null, lootContextBuilder.build());
-                        spreadItemsInInventory(inventory, itemStacks);
-                        BlockState state = chest.getBlock().getState();
-                        state.update();
+                        LootContext.Builder lootContextBuilder = new LootContext.Builder(Objects.requireNonNull(chest.getLocation()));
+                        Random randomReplenish;
+                        if (plugin.isSeedResetOnReplenish()) {
+                            randomReplenish = new Random(random.nextLong());
+                        } else {
+                            long seed = container.getOrDefault(TreasureChestGuardian.LOOT_TABLE_SEED_KEY, PersistentDataType.LONG, 0L);
+                            if (seed == 0L) {
+                                chest.setSeed(random.nextLong());
+                                container.set(TreasureChestGuardian.LOOT_TABLE_SEED_KEY, PersistentDataType.LONG, chest.getSeed());
+
+                            } else {
+                                chest.setSeed(seed);
+                            }
+                            randomReplenish = new Random(chest.getSeed());
+                        }
+                        ArrayList<ItemStack> itemStacks = (ArrayList<ItemStack>) lootTable.populateLoot(randomReplenish, lootContextBuilder.build());
+                        spreadItemsInInventory(chest.getInventory(), itemStacks);
                     }
                 }
             }

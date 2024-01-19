@@ -1,12 +1,11 @@
-package io.computerbandit.treasurechestguardian;
+package io.computerbandit.treasurechestguardian.event;
 
 import com.destroystokyo.paper.loottable.LootableInventory;
+import io.computerbandit.treasurechestguardian.AutoReplenishManager;
+import io.computerbandit.treasurechestguardian.TreasureChestGuardian;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.event.EventHandler;
@@ -17,7 +16,6 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -40,16 +38,13 @@ public class InventoryInteractionListener implements Listener {
         if (holder instanceof Chest) {
             Chest chest = (Chest) holder;
             if (autoReplenishManager.isPaperAutoReplenishDisabled(chest) && plugin.isAutoReplenishFallbackEnabled()) {
-                if (isTreasureChest(chest, holder)) {
-                    autoReplenishManager.checkAndReplenish(event.getInventory(), chest);
-
-                    BlockState state = chest.getBlock().getState();
-                    state.update();
-
+                if (isTreasureChest(chest)) {
+                    autoReplenishManager.checkAndReplenish(chest);
                 }
             }
         }
     }
+
     //TODO create event for when a minecraft with a chest is destroyed
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
@@ -59,8 +54,8 @@ public class InventoryInteractionListener implements Listener {
         if (!(block.getState() instanceof Chest)) return;
 
         Chest chest = (Chest) block.getState();
-        if (isTreasureChest(chest, chest.getBlockInventory().getHolder())) {
-            if (plugin.enforceBreakPermission() && !player.hasPermission("treasurechestguardian.break")) {
+        if (isTreasureChest(chest)) {
+            if (plugin.enforceBreakPermission() && !player.hasPermission("treasureChestGuardian.break")) {
                 if (plugin.isNoPermMessageEnabled()) {
                     player.sendMessage(MiniMessage.miniMessage().deserialize(plugin.getNoPermMessage()));
                 }
@@ -80,11 +75,9 @@ public class InventoryInteractionListener implements Listener {
     public void onLootGenerate(LootGenerateEvent event) {
         if (event.getInventoryHolder() instanceof Chest) {
             Chest chest = (Chest) event.getInventoryHolder();
-            PersistentDataContainer dataContainer = chest.getPersistentDataContainer();
-            dataContainer.set(TreasureChestGuardian.LOOT_TABLE_KEY, PersistentDataType.STRING, event.getLootTable().getKey().toString());
+            PersistentDataContainer container = chest.getPersistentDataContainer();
+            container.set(TreasureChestGuardian.LOOT_TABLE_KEY, PersistentDataType.STRING, event.getLootTable().getKey().toString());
             chest.update();
-
-            //TODO add this key value to make the minecraft replenish with the correct
         }
     }
 
@@ -99,21 +92,21 @@ public class InventoryInteractionListener implements Listener {
     }
 
     private void preventAgainstExplosion(List<Block> blocksToBeExploded) {
-        blocksToBeExploded.removeIf(block -> block.getState() instanceof Chest && isTreasureChest((Chest) block.getState(), ((Chest) block.getState()).getBlockInventory().getHolder()));
+        blocksToBeExploded.removeIf(block -> block.getState() instanceof Chest && isTreasureChest((Chest) block.getState()));
+        blocksToBeExploded.removeIf(block -> block.getState() instanceof StorageMinecart && isTreasureChest((StorageMinecart) block.getState()));
     }
 
-    private boolean isTreasureChest(LootableInventory lootableInventory, InventoryHolder holder) {
-        plugin.getLogger().info("isTreasureChest() -> hasLootTable: " + lootableInventory.hasLootTable() + ", hasBeenFilled: " + lootableInventory.hasBeenFilled());
+    private boolean isTreasureChest(LootableInventory lootableInventory) {
         if (lootableInventory.hasLootTable() || lootableInventory.hasBeenFilled()) return true;
         if (plugin.isAutoReplenishFallbackEnabled()) {
-            boolean hasNextReplenishTime = autoReplenishManager.getDataContainer(holder).has(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY);
-            plugin.getLogger().info("isTreasureChest() -> hasNextReplenishTime: " + hasNextReplenishTime);
-            return hasNextReplenishTime;
+            if (lootableInventory instanceof Chest) {
+                return ((Chest) lootableInventory).getPersistentDataContainer().has(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY);
+            }
         } else {
             return lootableInventory.hasLootTable() || lootableInventory.hasPendingRefill();
         }
+        return false;
     }
-
 }
 
 
