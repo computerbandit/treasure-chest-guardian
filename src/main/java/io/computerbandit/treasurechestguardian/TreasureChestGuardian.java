@@ -53,7 +53,7 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
 
         getServer().getPluginManager().registerEvents(new TreasureChestListener(this), this);
 
-        new TreasureChestParticle(this).runTaskTimer(this, 0L, 20L * 10);
+        //new TreasureChestParticle(this).runTaskTimer(this, 0L, 20L * 2);
     }
 
     @Override
@@ -128,5 +128,9 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
 
     public void addChest(Location location) {
         treasureChests.remove(location);
+    }
+
+    public Set<Location> getTreasureChests() {
+        return treasureChests;
     }
 }

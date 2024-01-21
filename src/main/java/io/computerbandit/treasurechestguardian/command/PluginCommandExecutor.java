@@ -95,6 +95,8 @@ public class PluginCommandExecutor implements CommandExecutor {
                     container.set(TreasureChestGuardian.LOOT_TABLE_KEY, PersistentDataType.STRING, lootTable.getKey().toString());
                     chest.update(); // Apply changes
                     player.sendMessage("Treasure chest create with lootTable: " + lootTable.getKey());
+
+                    plugin.addChest(chest.getLocation());
                 }
                 if (openFlag) {
                     player.openInventory(chest.getInventory()); // Open the chest inventory for the player
