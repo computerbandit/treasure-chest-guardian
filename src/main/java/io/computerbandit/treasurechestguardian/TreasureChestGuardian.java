@@ -10,13 +10,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class TreasureChestGuardian extends JavaPlugin implements Listener {
 
+    private static final int CONFIG_VERSION = 1;
     public static NamespacedKey LAST_REPLENISH_TIME_KEY;
     public static NamespacedKey NEXT_REPLENISH_TIME_KEY;
     public static NamespacedKey LOOT_TABLE_KEY;
     public static NamespacedKey LOOT_TABLE_SEED_KEY;
     public static NamespacedKey IS_TREASURE_CHEST_KEY;
-
-    private static final int CONFIG_VERSION = 1;
 
     @Override
     public void onEnable() {
