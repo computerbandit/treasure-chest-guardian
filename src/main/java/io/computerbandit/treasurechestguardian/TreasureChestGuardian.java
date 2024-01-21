@@ -3,10 +3,15 @@ package io.computerbandit.treasurechestguardian;
 import io.computerbandit.treasurechestguardian.command.PluginCommandExecutor;
 import io.computerbandit.treasurechestguardian.command.PluginTabCompleter;
 import io.computerbandit.treasurechestguardian.listener.TreasureChestListener;
+import io.computerbandit.treasurechestguardian.task.TreasureChestParticle;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public final class TreasureChestGuardian extends JavaPlugin implements Listener {
 
@@ -17,11 +22,17 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
     public static NamespacedKey LOOT_TABLE_SEED_KEY;
     public static NamespacedKey IS_TREASURE_CHEST_KEY;
 
+    private AutoReplenishManager manager;
+
+    private final Set<Location> treasureChests = new HashSet<>();
+
     @Override
+
     public void onEnable() {
         saveDefaultConfig();
         updateConfigIfNeeded();
-        getServer().getPluginManager().registerEvents(new TreasureChestListener(new AutoReplenishManager(this)), this);
+
+        manager = new AutoReplenishManager(this);
 
         //these are only used when the paper auto-rep is disabled and the fallback is enabled
         LAST_REPLENISH_TIME_KEY = new NamespacedKey(this, "last_replenish_time");
@@ -39,6 +50,10 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
             tcgCommand.setExecutor(commandExecutor);
             tcgCommand.setTabCompleter(tabCompleter);
         }
+
+        getServer().getPluginManager().registerEvents(new TreasureChestListener(this), this);
+
+        new TreasureChestParticle(this).runTaskTimer(this, 0L, 20L * 10);
     }
 
     @Override
@@ -103,4 +118,15 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
     }
 
 
+    public AutoReplenishManager getManager() {
+        return manager;
+    }
+
+    public void removeChest(Location location) {
+        treasureChests.add(location);
+    }
+
+    public void addChest(Location location) {
+        treasureChests.remove(location);
+    }
 }

@@ -7,6 +7,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.minecart.StorageMinecart;
@@ -17,6 +18,8 @@ import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.*;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -26,13 +29,10 @@ import java.util.List;
 
 public class TreasureChestListener implements Listener {
 
-    private final AutoReplenishManager autoReplenishManager;
-
     private final TreasureChestGuardian plugin;
 
-    public TreasureChestListener(AutoReplenishManager autoReplenishManager) {
-        this.autoReplenishManager = autoReplenishManager;
-        plugin = autoReplenishManager.getPlugin();
+    public TreasureChestListener(TreasureChestGuardian plugin) {
+        this.plugin = plugin;
     }
 
     @EventHandler
@@ -49,9 +49,7 @@ public class TreasureChestListener implements Listener {
                     player.sendMessage(MiniMessage.miniMessage().deserialize(plugin.getNoPermMessage()));
                 }
                 event.setCancelled(true);
-                return;
-            }
-            if (!player.isSneaking()) {
+            } else if (!player.isSneaking()) {
                 if (plugin.isWarningMessageEnabled()) {
                     player.sendMessage(MiniMessage.miniMessage().deserialize(plugin.getWarningMessage()));
                 }
@@ -63,7 +61,6 @@ public class TreasureChestListener implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         Block placedBlock = event.getBlockPlaced();
-
         // Check if a chest is being placed
         if (placedBlock.getType() == Material.CHEST || placedBlock.getType() == Material.TRAPPED_CHEST) {
             // Check adjacent blocks for treasure chests
@@ -82,7 +79,6 @@ public class TreasureChestListener implements Listener {
             }
         }
     }
-
 
     @EventHandler
     public void onExplosion(BlockExplodeEvent event) {
@@ -110,9 +106,9 @@ public class TreasureChestListener implements Listener {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof Chest) {
             Chest chest = (Chest) holder;
-            if (autoReplenishManager.isPaperAutoReplenishDisabled(chest) && plugin.isAutoReplenishFallbackEnabled()) {
+            if (getAutoReplenishManager().isPaperAutoReplenishDisabled(chest) && plugin.isAutoReplenishFallbackEnabled()) {
                 if (isTreasureChest(chest)) {
-                    autoReplenishManager.checkAndReplenish(chest);
+                    getAutoReplenishManager().checkAndReplenish(chest);
                 }
             }
         }
@@ -135,8 +131,7 @@ public class TreasureChestListener implements Listener {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof Chest && isTreasureChest((Chest) holder)) {
             // Check if any of the raw slots being dragged over are part of the chest inventory
-            boolean dragsIntoChest = event.getRawSlots().stream()
-                    .anyMatch(slot -> slot < event.getInventory().getSize());
+            boolean dragsIntoChest = event.getRawSlots().stream().anyMatch(slot -> slot < event.getInventory().getSize());
 
             if (dragsIntoChest) {
                 event.setCancelled(true);
@@ -178,6 +173,24 @@ public class TreasureChestListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onChunkLoad(ChunkLoadEvent event) {
+        for (BlockState state : event.getChunk().getTileEntities()) {
+            if (state instanceof Chest && isTreasureChest((Chest) state)) {
+                plugin.addChest(state.getLocation());
+            }
+        }
+    }
+
+    @EventHandler
+    public void onChunkUnload(ChunkUnloadEvent event) {
+        for (BlockState state : event.getChunk().getTileEntities()) {
+            if (state instanceof Chest && isTreasureChest((Chest) state)) {
+                plugin.removeChest(state.getLocation());
+            }
+        }
+    }
+
     private void preventAgainstExplosion(List<Block> blocksToBeExploded) {
         blocksToBeExploded.removeIf(block -> block.getState() instanceof Chest && isTreasureChest((Chest) block.getState()));
         blocksToBeExploded.removeIf(block -> block.getState() instanceof StorageMinecart && isTreasureChest((StorageMinecart) block.getState()));
@@ -187,12 +200,17 @@ public class TreasureChestListener implements Listener {
         if (lootableInventory.hasLootTable() || lootableInventory.hasBeenFilled()) return true;
         if (plugin.isAutoReplenishFallbackEnabled()) {
             if (lootableInventory instanceof Chest) {
-                return ((Chest) lootableInventory).getPersistentDataContainer().has(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY);
+                return ((Chest) lootableInventory).getPersistentDataContainer().has(TreasureChestGuardian.IS_TREASURE_CHEST_KEY);
             }
         } else {
             return lootableInventory.hasLootTable() || lootableInventory.hasPendingRefill();
         }
         return false;
+    }
+
+
+    private AutoReplenishManager getAutoReplenishManager() {
+        return plugin.getManager();
     }
 }
 
