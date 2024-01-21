@@ -3,6 +3,7 @@ package io.computerbandit.treasurechestguardian;
 import com.destroystokyo.paper.loottable.LootableInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -44,9 +45,9 @@ public class AutoReplenishManager {
                     container.set(TreasureChestGuardian.LAST_REPLENISH_TIME_KEY, PersistentDataType.LONG, currentTime);
                     long newNextReplenishTime = currentTime + (getRandomReplenishInterval() * 1000L);      // Convert seconds to milliseconds
                     container.set(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, newNextReplenishTime);
-
-                    replenishTreasureChest(chest);
                     chest.update();
+                    replenishTreasureChest(chest);
+
                 }
             }
         }
@@ -94,6 +95,8 @@ public class AutoReplenishManager {
                         }
                         ArrayList<ItemStack> itemStacks = (ArrayList<ItemStack>) lootTable.populateLoot(randomReplenish, lootContextBuilder.build());
                         spreadItemsInInventory(chest.getInventory(), itemStacks);
+                        BlockState state = chest.getBlock().getState();
+                        state.update();
                     }
                 }
             }

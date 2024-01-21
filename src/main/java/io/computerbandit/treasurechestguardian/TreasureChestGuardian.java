@@ -2,7 +2,7 @@ package io.computerbandit.treasurechestguardian;
 
 import io.computerbandit.treasurechestguardian.command.PluginCommandExecutor;
 import io.computerbandit.treasurechestguardian.command.PluginTabCompleter;
-import io.computerbandit.treasurechestguardian.event.InventoryInteractionListener;
+import io.computerbandit.treasurechestguardian.event.TreasureChestListener;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
@@ -21,7 +21,7 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
     public void onEnable() {
         saveDefaultConfig();
         updateConfigIfNeeded();
-        getServer().getPluginManager().registerEvents(new InventoryInteractionListener(new AutoReplenishManager(this)), this);
+        getServer().getPluginManager().registerEvents(new TreasureChestListener(new AutoReplenishManager(this)), this);
 
         //these are only used when the paper auto-rep is disabled and the fallback is enabled
         LAST_REPLENISH_TIME_KEY = new NamespacedKey(this, "last_replenish_time");
