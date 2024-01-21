@@ -4,6 +4,7 @@ import com.destroystokyo.paper.loottable.LootableInventory;
 import io.computerbandit.treasurechestguardian.AutoReplenishManager;
 import io.computerbandit.treasurechestguardian.TreasureChestGuardian;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -14,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockMultiPlaceEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.*;
@@ -83,6 +85,7 @@ public class TreasureChestListener implements Listener {
         }
     }
 
+
     @EventHandler
     public void onExplosion(BlockExplodeEvent event) {
         preventAgainstExplosion(event.blockList());
@@ -99,6 +102,7 @@ public class TreasureChestListener implements Listener {
             Chest chest = (Chest) event.getInventoryHolder();
             PersistentDataContainer container = chest.getPersistentDataContainer();
             container.set(TreasureChestGuardian.LOOT_TABLE_KEY, PersistentDataType.STRING, event.getLootTable().getKey().toString());
+            container.set(TreasureChestGuardian.IS_TREASURE_CHEST_KEY, PersistentDataType.BOOLEAN, true);
             chest.update();
         }
     }

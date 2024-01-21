@@ -14,6 +14,7 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
     public static NamespacedKey NEXT_REPLENISH_TIME_KEY;
     public static NamespacedKey LOOT_TABLE_KEY;
     public static NamespacedKey LOOT_TABLE_SEED_KEY;
+    public static NamespacedKey IS_TREASURE_CHEST_KEY;
 
     private static final int CONFIG_VERSION = 1;
 
@@ -26,8 +27,9 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
         //these are only used when the paper auto-rep is disabled and the fallback is enabled
         LAST_REPLENISH_TIME_KEY = new NamespacedKey(this, "last_replenish_time");
         NEXT_REPLENISH_TIME_KEY = new NamespacedKey(this, "next_replenish_time");
-        LOOT_TABLE_KEY = new NamespacedKey(this, "loot_table_key");
-        LOOT_TABLE_SEED_KEY = new NamespacedKey(this, "loot_table_seed_key");
+        LOOT_TABLE_KEY = new NamespacedKey(this, "loot_table");
+        LOOT_TABLE_SEED_KEY = new NamespacedKey(this, "loot_table_seed");
+        IS_TREASURE_CHEST_KEY = new NamespacedKey(this, "is_treasure_chest");
 
         // Register the command and TabCompleter
         PluginCommand tcgCommand = this.getCommand("treasureChestGuardian");

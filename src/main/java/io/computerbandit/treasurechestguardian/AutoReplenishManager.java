@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
+import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
@@ -40,14 +41,11 @@ public class AutoReplenishManager {
             getPlugin().getLogger().info("checking nextReplenishTime: " + nextReplenishTime);
             if (currentTime > nextReplenishTime) {
                 if (chest.getInventory().isEmpty()) {
-
-
                     container.set(TreasureChestGuardian.LAST_REPLENISH_TIME_KEY, PersistentDataType.LONG, currentTime);
                     long newNextReplenishTime = currentTime + (getRandomReplenishInterval() * 1000L);      // Convert seconds to milliseconds
                     container.set(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, newNextReplenishTime);
                     chest.update();
                     replenishTreasureChest(chest);
-
                 }
             }
         }
