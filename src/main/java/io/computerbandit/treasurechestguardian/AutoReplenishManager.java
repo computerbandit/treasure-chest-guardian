@@ -1,6 +1,7 @@
 package io.computerbandit.treasurechestguardian;
 
 import com.destroystokyo.paper.loottable.LootableInventory;
+import io.computerbandit.treasurechestguardian.event.TreasureChestReplenishedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
@@ -44,7 +45,11 @@ public class AutoReplenishManager {
                     long newNextReplenishTime = currentTime + (getRandomReplenishInterval() * 1000L);      // Convert seconds to milliseconds
                     container.set(TreasureChestGuardian.NEXT_REPLENISH_TIME_KEY, PersistentDataType.LONG, newNextReplenishTime);
                     chest.update();
-                    replenishTreasureChest(chest);
+                    boolean didReplenish = replenishTreasureChest(chest);
+                    if (didReplenish) {
+                        TreasureChestReplenishedEvent event = new TreasureChestReplenishedEvent(chest);
+                        Bukkit.getServer().getPluginManager().callEvent(event);
+                    }
                 }
             }
         }
@@ -64,8 +69,7 @@ public class AutoReplenishManager {
         return lootableInventory == null || !lootableInventory.isRefillEnabled();
     }
 
-    private void replenishTreasureChest(LootableInventory lootableInventory) {
-        plugin.getLogger().info("IN replenishTreasureChest() ");
+    private boolean replenishTreasureChest(LootableInventory lootableInventory) {
         if (lootableInventory != null) {
             if (lootableInventory instanceof Chest) {
                 Chest chest = (Chest) lootableInventory;
@@ -94,10 +98,12 @@ public class AutoReplenishManager {
                         spreadItemsInInventory(chest.getInventory(), itemStacks);
                         BlockState state = chest.getBlock().getState();
                         state.update();
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     public void spreadItemsInInventory(Inventory inventory, ArrayList<ItemStack> items) {

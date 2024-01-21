@@ -2,7 +2,7 @@ package io.computerbandit.treasurechestguardian;
 
 import io.computerbandit.treasurechestguardian.command.PluginCommandExecutor;
 import io.computerbandit.treasurechestguardian.command.PluginTabCompleter;
-import io.computerbandit.treasurechestguardian.event.TreasureChestListener;
+import io.computerbandit.treasurechestguardian.listener.TreasureChestListener;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;

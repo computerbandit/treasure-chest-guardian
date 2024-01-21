@@ -1,4 +1,4 @@
-package io.computerbandit.treasurechestguardian.event;
+package io.computerbandit.treasurechestguardian.listener;
 
 import com.destroystokyo.paper.loottable.LootableInventory;
 import io.computerbandit.treasurechestguardian.AutoReplenishManager;
