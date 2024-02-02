@@ -65,8 +65,8 @@ public class AutoReplenishManager {
         return minSeconds + random.nextInt(maxSeconds - minSeconds);
     }
 
-    public boolean isPaperAutoReplenishDisabled(LootableInventory lootableInventory) {
-        return lootableInventory == null || !lootableInventory.isRefillEnabled();
+    public boolean isPaperAutoReplenishEnabled(LootableInventory lootableInventory) {
+        return lootableInventory != null && lootableInventory.isRefillEnabled();
     }
 
     private boolean replenishTreasureChest(LootableInventory lootableInventory) {

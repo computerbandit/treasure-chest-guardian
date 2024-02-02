@@ -1,6 +1,5 @@
 package io.computerbandit.treasurechestguardian.listener;
 
-import com.destroystokyo.paper.loottable.LootableInventory;
 import io.computerbandit.treasurechestguardian.AutoReplenishManager;
 import io.computerbandit.treasurechestguardian.TreasureChestGuardian;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -43,7 +42,7 @@ public class TreasureChestListener implements Listener {
         if (!(block.getState() instanceof Chest)) return;
 
         Chest chest = (Chest) block.getState();
-        if (isTreasureChest(chest)) {
+        if (plugin.isTreasureChest(chest)) {
             if (plugin.enforceBreakPermission() && !player.hasPermission("treasureChestGuardian.break")) {
                 if (plugin.isNoPermMessageEnabled()) {
                     player.sendMessage(MiniMessage.miniMessage().deserialize(plugin.getNoPermMessage()));
@@ -70,7 +69,7 @@ public class TreasureChestListener implements Listener {
                 if (adjacentBlock.getType() == Material.CHEST || adjacentBlock.getType() == Material.TRAPPED_CHEST) {
                     Chest adjacentChest = (Chest) adjacentBlock.getState();
 
-                    if (isTreasureChest(adjacentChest)) {
+                    if (plugin.isTreasureChest(adjacentChest)) {
                         event.setCancelled(true);
                         event.getPlayer().sendMessage("You cannot connect a chest to a treasure chest.");
                         break;
@@ -106,11 +105,10 @@ public class TreasureChestListener implements Listener {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof Chest) {
             Chest chest = (Chest) holder;
-            if (getAutoReplenishManager().isPaperAutoReplenishDisabled(chest) && plugin.isAutoReplenishFallbackEnabled()) {
-                if (isTreasureChest(chest)) {
-                    getAutoReplenishManager().checkAndReplenish(chest);
-                }
+            if (plugin.isTreasureChest(chest)) {
+                getAutoReplenishManager().checkAndReplenish(chest);
             }
+
         }
     }
 
@@ -120,7 +118,7 @@ public class TreasureChestListener implements Listener {
 
         if (destinationHolder instanceof Chest) {
             Chest chest = (Chest) destinationHolder;
-            if (isTreasureChest(chest)) {
+            if (plugin.isTreasureChest(chest)) {
                 event.setCancelled(true);
             }
         }
@@ -129,7 +127,7 @@ public class TreasureChestListener implements Listener {
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
-        if (holder instanceof Chest && isTreasureChest((Chest) holder)) {
+        if (holder instanceof Chest && plugin.isTreasureChest((Chest) holder)) {
             // Check if any of the raw slots being dragged over are part of the chest inventory
             boolean dragsIntoChest = event.getRawSlots().stream().anyMatch(slot -> slot < event.getInventory().getSize());
 
@@ -146,7 +144,7 @@ public class TreasureChestListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
 
-        if (holder instanceof Chest && isTreasureChest((Chest) holder)) {
+        if (holder instanceof Chest && plugin.isTreasureChest((Chest) holder)) {
             // Block actions that would place items into the chest
             if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 // Check if the items are being moved from the player's inventory to the chest
@@ -176,7 +174,7 @@ public class TreasureChestListener implements Listener {
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
         for (BlockState state : event.getChunk().getTileEntities()) {
-            if (state instanceof Chest && isTreasureChest((Chest) state)) {
+            if (state instanceof Chest && plugin.isTreasureChest((Chest) state)) {
                 plugin.addChest(state.getLocation());
             }
         }
@@ -185,27 +183,15 @@ public class TreasureChestListener implements Listener {
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
         for (BlockState state : event.getChunk().getTileEntities()) {
-            if (state instanceof Chest && isTreasureChest((Chest) state)) {
+            if (state instanceof Chest && plugin.isTreasureChest((Chest) state)) {
                 plugin.removeChest(state.getLocation());
             }
         }
     }
 
     private void preventAgainstExplosion(List<Block> blocksToBeExploded) {
-        blocksToBeExploded.removeIf(block -> block.getState() instanceof Chest && isTreasureChest((Chest) block.getState()));
-        blocksToBeExploded.removeIf(block -> block.getState() instanceof StorageMinecart && isTreasureChest((StorageMinecart) block.getState()));
-    }
-
-    private boolean isTreasureChest(LootableInventory lootableInventory) {
-        if (lootableInventory.hasLootTable() || lootableInventory.hasBeenFilled()) return true;
-        if (plugin.isAutoReplenishFallbackEnabled()) {
-            if (lootableInventory instanceof Chest) {
-                return ((Chest) lootableInventory).getPersistentDataContainer().has(TreasureChestGuardian.IS_TREASURE_CHEST_KEY);
-            }
-        } else {
-            return lootableInventory.hasLootTable() || lootableInventory.hasPendingRefill();
-        }
-        return false;
+        blocksToBeExploded.removeIf(block -> block.getState() instanceof Chest && plugin.isTreasureChest((Chest) block.getState()));
+        blocksToBeExploded.removeIf(block -> block.getState() instanceof StorageMinecart && plugin.isTreasureChest((StorageMinecart) block.getState()));
     }
 
 

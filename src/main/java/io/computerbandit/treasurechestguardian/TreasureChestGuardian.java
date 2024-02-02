@@ -1,11 +1,13 @@
 package io.computerbandit.treasurechestguardian;
 
+import com.destroystokyo.paper.loottable.LootableInventory;
 import io.computerbandit.treasurechestguardian.command.PluginCommandExecutor;
 import io.computerbandit.treasurechestguardian.command.PluginTabCompleter;
 import io.computerbandit.treasurechestguardian.listener.TreasureChestListener;
-import io.computerbandit.treasurechestguardian.task.TreasureChestParticle;
+import io.computerbandit.treasurechestguardian.task.TreasureChestParticleTask;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Chest;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -53,7 +55,7 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
 
         getServer().getPluginManager().registerEvents(new TreasureChestListener(this), this);
 
-        //new TreasureChestParticle(this).runTaskTimer(this, 0L, 20L * 2);
+        new TreasureChestParticleTask(this).runTaskTimer(this, 0L, 5L);
     }
 
     @Override
@@ -117,6 +119,16 @@ public final class TreasureChestGuardian extends JavaPlugin implements Listener 
         return getConfig().getBoolean("General.reset-seed-on-replenish", true);
     }
 
+    public boolean isTreasureChest(LootableInventory lootableInventory) {
+        if (getManager().isPaperAutoReplenishEnabled(lootableInventory)) {
+            return lootableInventory.hasLootTable() || lootableInventory.hasBeenFilled() || lootableInventory.hasPendingRefill();
+        } else if (isAutoReplenishFallbackEnabled()) {
+            if (lootableInventory instanceof Chest) {
+                return lootableInventory.hasLootTable() || ((Chest) lootableInventory).getPersistentDataContainer().has(TreasureChestGuardian.IS_TREASURE_CHEST_KEY);
+            }
+        }
+        return false;
+    }
 
     public AutoReplenishManager getManager() {
         return manager;
